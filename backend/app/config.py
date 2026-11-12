@@ -12,3 +12,5 @@ class Settings(BaseSettings):
 
     database_url: str = Field(min_length=1)
     frontend_origin: str = "http://localhost:5173"
+    nominatim_search_url: str = "https://nominatim.openstreetmap.org/search"
+    nominatim_user_agent: str = "FoodMapsLocalDemo/0.1"

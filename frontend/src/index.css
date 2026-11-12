@@ -1,1 +1,22 @@
 @import "tailwindcss";
+
+:root { font-family: Inter, system-ui, sans-serif; color: #172c29; background: #e7ede9; }
+body { margin: 0; }
+.map-page { position: relative; height: 100vh; height: 100dvh; isolation: isolate; }
+.map { width: 100%; height: 100%; z-index: 0; }
+.search-panel { position: absolute; top: 16px; left: 16px; z-index: 1; width: min(400px, calc(100% - 32px)); background: white; border-radius: 12px; box-shadow: 0 4px 24px #142f3030; overflow: hidden; }
+.search-heading { padding: 16px 16px 10px; }
+h1 { margin: 0; font-size: 22px; font-weight: 750; }
+.search-heading p { margin: 2px 0 0; color: #52645f; font-size: 14px; }
+.search-form { display: flex; gap: 8px; padding: 0 16px 12px; }
+.search-form input { min-width: 0; flex: 1; border: 1px solid #899b95; border-radius: 6px; padding: 10px; font-size: 16px; }
+.search-form button { background: #216553; color: white; border: 0; border-radius: 6px; padding: 10px 14px; font-weight: 600; cursor: pointer; }
+:focus-visible { outline: 3px solid #1982bd; outline-offset: 2px; }
+.search-message { margin: 0; padding: 8px 16px; font-size: 14px; }
+.search-results { margin: 0; padding: 0; list-style: none; max-height: min(35dvh, 320px); overflow-y: auto; overscroll-behavior: contain; }
+.search-results li { padding: 12px 16px; border-top: 1px solid #e3e9e6; overflow-wrap: anywhere; }
+.search-results strong, .search-results span { display: block; }
+.search-results span { font-size: 14px; color: #52645f; }
+.search-credit { margin: 0; padding: 8px 16px; font-size: 11px; color: #52645f; }
+.search-credit a { text-decoration: underline; }
+@media (max-height: 450px) { .search-heading { display: none; } .search-form { padding-top: 12px; } .search-results { max-height: 25dvh; } }
