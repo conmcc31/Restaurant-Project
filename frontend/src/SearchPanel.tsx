@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
-import { searchPlaces } from './placeSearch'
+import { canSave, savePlace, searchPlaces } from './placeSearch'
 import type { Place } from './placeSearch'
 
 type Status = 'idle' | 'loading' | 'success' | 'error'
@@ -9,6 +9,26 @@ export default function SearchPanel() {
   const [query, setQuery] = useState('')
   const [places, setPlaces] = useState<Place[]>([])
   const [status, setStatus] = useState<Status>('idle')
+  const [saveMessage, setSaveMessage] = useState('')
+  const [pending, setPending] = useState<Set<string>>(new Set())
+  const pendingIds = useRef(new Set<string>())
+  async function select(place: Place) {
+    if (!canSave(place) || pendingIds.current.has(place.osm_id!)) return
+    const identity = place.osm_id!
+    pendingIds.current.add(identity)
+    setPending(new Set(pendingIds.current))
+    setSaveMessage(`Saving ${place.name}…`)
+    try {
+      const result = await savePlace(place)
+      setSaveMessage(result.outcome === 'created'
+        ? `Saved ${place.name}.` : `Already saved: ${place.name}.`)
+    } catch {
+      setSaveMessage(`Could not save ${place.name}. Select the restaurant again to retry.`)
+    } finally {
+      pendingIds.current.delete(identity)
+      setPending(new Set(pendingIds.current))
+    }
+  }
   const request = useRef<AbortController | null>(null)
   useEffect(() => () => request.current?.abort(), [])
 
@@ -51,10 +71,18 @@ export default function SearchPanel() {
         {status === 'error' && <p className="search-message">Location search is unavailable. Please try again later.</p>}
         {status === 'success' && <p className="search-message">{places.length ? `${places.length} locations found` : 'No matching locations found'}</p>}
       </div>
+      <p className="search-message" role="status" aria-live="polite" aria-atomic="true">{saveMessage}</p>
       {places.length > 0 && <ul className="search-results" aria-label="Search results">
         {places.map(place => <li key={place.display_name}>
-          {place.name && <strong>{place.name}</strong>}
-          <span>{place.display_name}</span>
+          <button type="button" className="result-select"
+            aria-label={`Save ${place.name || 'location'}: ${place.display_name}`}
+            disabled={!canSave(place) || pending.has(place.osm_id!)}
+            onClick={() => void select(place)}>
+            {place.name && <strong>{place.name}</strong>}
+            <span>{place.display_name}</span>
+            {pending.has(place.osm_id!) && <span>Saving…</span>}
+            {!canSave(place) && <span>Cannot save: location details are incomplete. Try another result or search.</span>}
+          </button>
         </li>)}
       </ul>}
       <p className="search-credit">Search data © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a></p>

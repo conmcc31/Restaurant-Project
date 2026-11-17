@@ -1,1 +1,6 @@
-Generic single-database configuration.
+Alembic migrations use DATABASE_URL from backend/.env or the process environment.
+From backend/: .venv/bin/alembic upgrade head
+Inspect current revision: .venv/bin/alembic current
+Metadata: app.models.Base.metadata. Initial revision: 003_restaurants.
+Never downgrade a database containing saved entries. Reversibility is tested only
+in the randomly named disposable database used by RUN_POSTGRES_TESTS=1 pytest.

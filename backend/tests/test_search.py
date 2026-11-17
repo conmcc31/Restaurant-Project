@@ -20,7 +20,19 @@ def test_search_contract_and_cache(settings):
 
     def upstream(request):
         calls.append(request)
-        return httpx.Response(200, json=[{"name": "Cafe", "display_name": "Cafe, Boston"}])
+        return httpx.Response(
+            200,
+            json=[
+                {
+                    "name": "Cafe",
+                    "display_name": "Cafe, Boston",
+                    "lat": "42.36",
+                    "lon": "-71.05",
+                    "osm_type": "node",
+                    "osm_id": 123,
+                }
+            ],
+        )
 
     async def run():
         service = PlaceSearch(settings)
@@ -32,6 +44,8 @@ def test_search_contract_and_cache(settings):
         first, second = await asyncio.gather(service.search("Cafe"), service.search("cafe"))
         assert first == second
         assert first[0].display_name == "Cafe, Boston"
+        assert first[0].osm_id == "node/123"
+        assert first[0].latitude == 42.36
         await service.client.aclose()
 
     asyncio.run(run())
@@ -85,3 +99,38 @@ def test_api_empty_and_provider_failures(settings, payload, status, expected):
         assert client.get("/api/places/search", params={"q": "Cafe"}).status_code == expected
         assert client.get("/api/places/search", params={"q": "  "}).json() == []
         assert client.get("/api/places/search", params={"q": "x" * 201}).status_code == 422
+
+
+def test_normalizes_provider_identity_and_coordinates():
+    from app.search import normalize_place
+
+    raw = dict(
+        name="Cafe",
+        display_name="Cafe, Boston",
+        lat="42.36",
+        lon="-71.05",
+        osm_type="way",
+        osm_id=123,
+        place_id=999,
+    )
+    place = normalize_place(raw)
+    assert place.osm_id == "way/123"
+    assert place.latitude == 42.36
+    assert place.longitude == -71.05
+    assert normalize_place(raw | {"osm_type": "node", "osm_id": "00123"}).osm_id == "node/123"
+    for change in [
+        {"name": ""},
+        {"display_name": ""},
+        {"lat": "NaN"},
+        {"lon": "181"},
+        {"osm_id": None},
+        {"osm_type": "unknown"},
+        {"osm_id": 0},
+    ]:
+        result = normalize_place(raw | change)
+        assert result.osm_id is None
+        assert result.latitude is None
+        assert result.name == (raw | change)["name"]
+    assert (
+        normalize_place({"name": "Cafe", "display_name": "Boston", "place_id": 999}).osm_id is None
+    )

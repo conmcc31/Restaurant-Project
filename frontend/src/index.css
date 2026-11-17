@@ -14,9 +14,14 @@ h1 { margin: 0; font-size: 22px; font-weight: 750; }
 :focus-visible { outline: 3px solid #1982bd; outline-offset: 2px; }
 .search-message { margin: 0; padding: 8px 16px; font-size: 14px; }
 .search-results { margin: 0; padding: 0; list-style: none; max-height: min(35dvh, 320px); overflow-y: auto; overscroll-behavior: contain; }
-.search-results li { padding: 12px 16px; border-top: 1px solid #e3e9e6; overflow-wrap: anywhere; }
+.search-results li { border-top: 1px solid #e3e9e6; overflow-wrap: anywhere; }
 .search-results strong, .search-results span { display: block; }
 .search-results span { font-size: 14px; color: #52645f; }
 .search-credit { margin: 0; padding: 8px 16px; font-size: 11px; color: #52645f; }
 .search-credit a { text-decoration: underline; }
 @media (max-height: 450px) { .search-heading { display: none; } .search-form { padding-top: 12px; } .search-results { max-height: 25dvh; } }
+
+.result-select { display: block; width: 100%; padding: 12px 16px; border: 0; background: white; text-align: left; color: inherit; font: inherit; cursor: pointer; }
+.result-select:hover:not(:disabled) { background: #edf5f0; }
+.result-select:focus-visible { outline-offset: -3px; }
+.result-select:disabled { cursor: default; color: #52645f; }

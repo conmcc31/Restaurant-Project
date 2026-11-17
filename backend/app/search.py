@@ -5,14 +5,45 @@ from collections import OrderedDict
 from time import monotonic
 
 import httpx
-from pydantic import BaseModel, TypeAdapter
+from pydantic import BaseModel, TypeAdapter, ValidationError
 
 from app.config import Settings
+from app.restaurants import RestaurantCreate
 
 
 class Place(BaseModel):
     name: str = ""
     display_name: str
+    latitude: float | None = None
+    longitude: float | None = None
+    osm_id: str | None = None
+
+
+def normalize_place(raw: dict) -> Place:
+    place = Place.model_validate(
+        {"name": raw.get("name") or "", "display_name": raw.get("display_name") or ""}
+    )
+    try:
+        osm_type = raw.get("osm_type", "")
+        osm_number = str(raw.get("osm_id", ""))
+        if (
+            osm_type not in {"node", "way", "relation"}
+            or not osm_number.isascii()
+            or not osm_number.isdecimal()
+        ):
+            return place
+        data = RestaurantCreate(
+            name=place.name,
+            address=place.display_name,
+            latitude=float(raw["lat"]),
+            longitude=float(raw["lon"]),
+            osm_id=f"{osm_type}/{int(osm_number)}",
+        )
+    except (ValidationError, ValueError, TypeError, KeyError):
+        return place
+    return place.model_copy(
+        update={"latitude": data.latitude, "longitude": data.longitude, "osm_id": data.osm_id}
+    )
 
 
 class PlaceSearch:
@@ -54,7 +85,8 @@ class PlaceSearch:
             if response.status_code == 429:
                 self.next_request = monotonic() + 60
             response.raise_for_status()
-            places = TypeAdapter(list[Place]).validate_python(response.json())[:5]
+            raw_places = TypeAdapter(list[dict]).validate_python(response.json())[:5]
+            places = [normalize_place(raw) for raw in raw_places]
             places = list({place.display_name: place for place in places}.values())
             self.cache[key] = (monotonic() + 86400, places)
             if len(self.cache) > 256:
