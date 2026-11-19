@@ -1,6 +1,17 @@
 """Restaurant schema. Tables are created only through Alembic."""
 
-from sqlalchemy import CheckConstraint, Double, Identity, Integer, Text, UniqueConstraint
+from datetime import date
+
+from sqlalchemy import (
+    CheckConstraint,
+    Double,
+    ForeignKey,
+    Identity,
+    Integer,
+    Text,
+    UniqueConstraint,
+    func,
+)
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -29,3 +40,14 @@ class Restaurant(Base):
     latitude: Mapped[float] = mapped_column(Double)
     longitude: Mapped[float] = mapped_column(Double)
     osm_id: Mapped[str] = mapped_column(Text)
+    recommend: Mapped[bool | None] = mapped_column()
+
+
+class Comment(Base):
+    __tablename__ = "comments"
+    __table_args__ = (CheckConstraint("comment ~ '[^[:space:]]'", name="ck_comments_nonblank"),)
+
+    comment_id: Mapped[int] = mapped_column(Integer, Identity(), primary_key=True)
+    restaurant_id: Mapped[int] = mapped_column(ForeignKey("restaurants.id", ondelete="CASCADE"))
+    comment: Mapped[str] = mapped_column(Text)
+    added_on: Mapped[date] = mapped_column(server_default=func.current_date())

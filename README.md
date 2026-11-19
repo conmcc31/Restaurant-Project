@@ -100,7 +100,7 @@ From `backend/`:
 .venv/bin/alembic current
 ```
 
-`alembic current` needs PostgreSQL running and should show `003_restaurants (head)`.
+`alembic current` needs PostgreSQL running and should show `004_feedback (head)`.
 After pulling new migrations, run `.venv/bin/alembic upgrade head` before starting
 FastAPI. Repeating this command preserves existing data. Alembic uses the registered
 SQLAlchemy metadata in `app/models.py`; the app never creates tables at startup.
@@ -237,7 +237,7 @@ This is an illustrative contract, not seeded data. Responses are:
 - **422**: FastAPI validation feedback for invalid/missing/extra fields, including client `user_id`.
 - **503**: `{"detail":"Restaurant could not be saved. Please try again."}` for database failures.
 
-`restaurant` includes all seven columns. PostgreSQL `ON CONFLICT DO NOTHING`
+`restaurant` includes the seven required restaurant fields. PostgreSQL `ON CONFLICT DO NOTHING`
 resolves concurrent saves without overwriting the original data; responses wait
 for commit. Searching and typing alone never write rows. No retrieval API is added.
 Verify entries through SQL, for example:
